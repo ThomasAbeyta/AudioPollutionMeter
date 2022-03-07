@@ -15,6 +15,8 @@
 #define SCREEN_ADDRESS 0x3C /// See datasheet for Address; for 128x64
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+#define LOGO_HEIGHT 16
+#define LOGO_WIDTH 16
 
 File dataFile;
 
@@ -50,12 +52,12 @@ void setup() {
   if (!status) {  // if status is false
     Serial.printf("Card failed, or not present\n");
     while (true); // pause the code indefinately
-  }
+    }
   else {
     Serial.printf("card initialized.\n");           //checks the SD status and initialize
-  }
-if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)){
-   }
+    }
+    if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)){
+    }
 
 
    display.display();
@@ -73,36 +75,38 @@ void loop() {
 
   audio = analogRead(ANALOGPIN);                    //interger for audio
 
-   if (Serial.available()) {
+  
+   if (audio >= 900) {
+      digitalClockDisplay();
+  }
+  if (audio >= 900) {
+     if (Serial.available()) {
      time_t t = processSyncMessage();
      if (t != 0) {
         Teensy3Clock.set(t); // set the RTC
         setTime(t);
         }
-      }
-   if (audio >= 900) {
-      digitalClockDisplay();
-  }
-  if (audio >= 900) {
-    Serial.printf(" above 45db: %i\n", audio);
+        Serial.printf(" above 45db: %i\n", audio);
     writeToSD(audio);                             //pulls up void writeToSD when above a threshold
+    }
   }
-text(); 
+      
+    text(); 
 
 }
 
 void text(void){
   
+  
+  if (audio >= 800) {
   dbLevel= (audio/20);
   display.clearDisplay();
-
-  display.setTextSize(2);  //draws 2x scale text
+  display.setTextSize(1);  //draws 2x scale text
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(10,0);
   display.printf("DB level: %i",dbLevel);
   display.display(); //shows the initial text
-  delay(100);
-
+  }
 }
 
 
