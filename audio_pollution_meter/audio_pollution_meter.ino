@@ -1,5 +1,11 @@
-#include <TimeLib.h>        //time header
+/*
+   Audio cancellation
+   Thomas Abeyta
+   March 7, 2022
+*/
 
+
+#include <TimeLib.h>        //time header
 #include <SD.h>
 #include <SPI.h>
 #include <Wire.h>
@@ -15,9 +21,6 @@
 #define SCREEN_ADDRESS 0x3C /// See datasheet for Address; for 128x64
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-#define LOGO_HEIGHT 16
-#define LOGO_WIDTH 16
-
 File dataFile;
 
 const int chipSelect = 4;
@@ -28,85 +31,76 @@ int dbLevel;
 
 void setup() {
 
-  setSyncProvider(getTeensy3Time);        // set the Time library to use Teensy 3.0's RTC to keep time
-
   Serial.begin(9600);
   while (!Serial);  // Wait for Arduino Serial Monitor to open
   delay(100);
+
+  setSyncProvider(getTeensy3Time);                 // set the Time library to use Teensy 3.0's RTC to keep time
 
   if (timeStatus() != timeSet) {
     Serial.println("Unable to sync with the RTC");
   }
   else {
-    Serial.println("RTC has set the system time");     //initializing time
+    Serial.println("RTC has set the system time");  //initializing time
   }
   Serial.printf("Initializing SD card...");         //monitor feedback/initializing SD
-
 
   pinMode(chipSelect, OUTPUT);                      //sets pin ready to write to SD
   pinMode(ANALOGPIN, INPUT);                        //gets pin ready to read MIC
   digitalWrite(chipSelect, HIGH);                   //sets the pin to high as on
 
-
   status = SD.begin(chipSelect);
   if (!status) {  // if status is false
     Serial.printf("Card failed, or not present\n");
     while (true); // pause the code indefinately
-    }
+  }
   else {
     Serial.printf("card initialized.\n");           //checks the SD status and initialize
-    }
-    if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)){
-    }
+  }
+  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+  }
 
 
-   display.display();
-   delay(4000); //pause for 4 seconds
+  display.display();
+  delay(4000); //pause for 4 seconds
 
-   //clear the buffer
-   display.clearDisplay();
-   display.setRotation(2);
-
-
+  //clear the buffer
+  display.clearDisplay();
+  display.setRotation(2);
 
 }
 
 void loop() {
 
-  audio = analogRead(ANALOGPIN);                    //interger for audio
 
-  
-   if (audio >= 900) {
-      digitalClockDisplay();
-  }
-  if (audio >= 900) {
-     if (Serial.available()) {
-     time_t t = processSyncMessage();
-     if (t != 0) {
-        Teensy3Clock.set(t); // set the RTC
-        setTime(t);
-        }
-        Serial.printf(" above 45db: %i\n", audio);
-    writeToSD(audio);                             //pulls up void writeToSD when above a threshold
+
+  audio = analogRead(ANALOGPIN);                    //interger for audio
+  if(audio >=900){
+  if (Serial.available()) {
+    time_t t = processSyncMessage();
+    if (t != 0) {
+      Teensy3Clock.set(t); // set the RTC
+      setTime(t);
     }
   }
-      
-    text(); 
-
+  
+    digitalClockDisplay();
+    text();
+    Serial.printf(" above 45db: %i\n", audio);
+    writeToSD(audio);                             //pulls up void writeToSD when above a threshold
+}
 }
 
-void text(void){
-  
-  
-  if (audio >= 800) {
-  dbLevel= (audio/20);
+void text(void) {
+
+  dbLevel = (audio / 20);
   display.clearDisplay();
   display.setTextSize(1);  //draws 2x scale text
   display.setTextColor(SSD1306_WHITE);
-  display.setCursor(10,0);
-  display.printf("DB level: %i",dbLevel);
+  display.setCursor(10, 3);
+  display.printf("DB level: %i", dbLevel);
   display.display(); //shows the initial text
-  }
+
 }
 
 
@@ -157,8 +151,7 @@ void digitalClockDisplay() {
   Serial.println();
 }
 
-time_t getTeensy3Time()
-{
+time_t getTeensy3Time() {
   return Teensy3Clock.get();
 }
 
