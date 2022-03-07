@@ -34,18 +34,14 @@ void setup() {
 
 void loop() {
 
-
-  Serial.printf("About to collect audio pullution \n");   //test print to screen
-  delay(2000);
-
   audio = analogRead(ANALOGPIN);                    //interger for audio
-  if (audio >= 795) {
-    Serial.printf(" %i\n", audio);
+  if (audio >= 900) {
+    Serial.printf(" above 45db: %i\n", audio);
     writeToSD(audio);                             //pulls up void writeToSD when above a threshold
-  }
+    }
   
-      delay(2000);
-      readFromSD();
+     
+     // readFromSD();
   }
 
 void writeToSD(int print_audio) {
@@ -54,7 +50,7 @@ void writeToSD(int print_audio) {
   if (dataFile) {
     dataFile.printf("%i\n", print_audio);
     dataFile.close();
-    Serial.printf("%i \n", print_audio);
+    Serial.printf("write to sd: %i \n", print_audio);
   }
   else {
     Serial.printf("loud.csv \n");          // if the file is available, write to it:
