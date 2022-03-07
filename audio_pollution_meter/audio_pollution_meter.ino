@@ -49,7 +49,7 @@ void loop() {
   }
 
 void writeToSD(int print_audio) {
-  dataFile = SD.open("AudioPollution.csv", FILE_WRITE);   //writes int audio to SD
+  dataFile = SD.open("loud.csv", FILE_WRITE);   //writes int audio to SD
 
   if (dataFile) {
     dataFile.printf("%i\n", print_audio);
@@ -57,7 +57,7 @@ void writeToSD(int print_audio) {
     Serial.printf("%i \n", print_audio);
   }
   else {
-    Serial.printf("error opening Audio_Pollution.csv \n");          // if the file is available, write to it:
+    Serial.printf("loud.csv \n");          // if the file is available, write to it:
   }
   return;
 }
@@ -65,9 +65,9 @@ void writeToSD(int print_audio) {
 void readFromSD() {
 
 
-  dataFile = SD.open("Audio_Pollution.csv");
+  dataFile = SD.open("loud.csv");
   if (dataFile) {
-    Serial.printf("Audio_Pollution.csv: \n");                       // re-open the file for reading:
+    Serial.printf("loud.csv: \n");                       // re-open the file for reading:
 
     // read from the file until there's nothing else in it:
     while (dataFile.available()) {
@@ -75,7 +75,7 @@ void readFromSD() {
     }
     dataFile.close();
   } else {
-    Serial.printf("error opening Audio_Pollution.csv \n");
+    Serial.printf("error opening audioPol.csvm \n");
   }
 
   return;
