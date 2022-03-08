@@ -1,11 +1,5 @@
-/*
-   Audio cancellation
-   Thomas Abeyta
-   March 7, 2022
-*/
-
-
 #include <TimeLib.h>        //time header
+
 #include <SD.h>
 #include <SPI.h>
 #include <Wire.h>
@@ -21,33 +15,38 @@
 #define SCREEN_ADDRESS 0x3C /// See datasheet for Address; for 128x64
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+
 File dataFile;
 
 const int chipSelect = 4;
 const int ANALOGPIN = 19;
 bool status;
 int audio;
-int dbLevel;
+; int dbLevel;
+int currentTime;
+int lastSecond;
 
 void setup() {
+
+  setSyncProvider(getTeensy3Time);        // set the Time library to use Teensy 3.0's RTC to keep time
 
   Serial.begin(9600);
   while (!Serial);  // Wait for Arduino Serial Monitor to open
   delay(100);
 
-  setSyncProvider(getTeensy3Time);                 // set the Time library to use Teensy 3.0's RTC to keep time
-
   if (timeStatus() != timeSet) {
     Serial.println("Unable to sync with the RTC");
   }
   else {
-    Serial.println("RTC has set the system time");  //initializing time
+    Serial.println("RTC has set the system time");     //initializing time
   }
   Serial.printf("Initializing SD card...");         //monitor feedback/initializing SD
+
 
   pinMode(chipSelect, OUTPUT);                      //sets pin ready to write to SD
   pinMode(ANALOGPIN, INPUT);                        //gets pin ready to read MIC
   digitalWrite(chipSelect, HIGH);                   //sets the pin to high as on
+
 
   status = SD.begin(chipSelect);
   if (!status) {  // if status is false
@@ -68,14 +67,17 @@ void setup() {
   display.clearDisplay();
   display.setRotation(2);
 
+
+
 }
 
 void loop() {
+  currentTime = millis();
 
 
 
   audio = analogRead(ANALOGPIN);                    //interger for audio
-  if(audio >=900){
+
   if (Serial.available()) {
     time_t t = processSyncMessage();
     if (t != 0) {
@@ -83,24 +85,30 @@ void loop() {
       setTime(t);
     }
   }
-  
+  if (audio >= 900) {
     digitalClockDisplay();
     text();
-    Serial.printf(" above 45db: %i\n", audio);
+    Serial.printf(" above 45db:%i\n", audio);
     writeToSD(audio);                             //pulls up void writeToSD when above a threshold
-}
+  }
+
+
 }
 
 void text(void) {
 
-  dbLevel = (audio / 20);
+  
   display.clearDisplay();
-  display.setTextSize(1);  //draws 2x scale text
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(10, 3);
-  display.printf("DB level: %i", dbLevel);
-  display.display(); //shows the initial text
 
+  if ((currentTime - lastSecond) > 1000) {
+    display.setTextSize(1);  //draws 2x scale text
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(10, 0);
+    display.printf("DB level: %i", audio);
+    display.display(); //shows the initial text
+    lastSecond = millis();
+    display.clearDisplay();
+  }
 }
 
 
@@ -151,7 +159,8 @@ void digitalClockDisplay() {
   Serial.println();
 }
 
-time_t getTeensy3Time() {
+time_t getTeensy3Time()
+{
   return Teensy3Clock.get();
 }
 
