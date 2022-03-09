@@ -5,9 +5,9 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-//#include <Ethernet.h>
-//#include <mac.h>
-//#include <hue.h>
+#include <Ethernet.h>
+#include <mac.h>
+#include <hue.h>
 
 #define TIME_HEADER  "T"   // Header tag for serial time sync message
 
@@ -37,14 +37,14 @@ void setup() {
   while (!Serial);  // Wait for Arduino Serial Monitor to open
   delay(100);
 
-  //pinMode(10, OUTPUT);
-  //digitalWrite(10, HIGH);
+  pinMode(10, OUTPUT);
+  digitalWrite(10, HIGH);
   //pinMode(4, OUTPUT);
   //digitalWrite(4, HIGH);
 
-  //Ethernet.begin(mac);           
+  Ethernet.begin(mac);           
   //printIP();
-  //Serial.printf("LinkStatus: %i  \n",Ethernet.linkStatus());
+  Serial.printf("LinkStatus: %i  \n",Ethernet.linkStatus());
 
 
 
@@ -88,8 +88,7 @@ void setup() {
 void loop() {
   currentTime = millis();
 
-
-
+  
   audio = analogRead(ANALOGPIN);                    //interger for audio
 
   if (Serial.available()) {
@@ -103,11 +102,24 @@ void loop() {
     digitalClockDisplay();
     text();
     Serial.printf(" above 45db:%i\n", audio);
+    setHue(5,true,HueBlue,200,255); 
+    if ((currentTime - lastSecond) > 250) {
+    setHue(5,true,HueOrange,200,255);
     writeToSD(audio);                             //pulls up void writeToSD when above a threshold
+    lastSecond = millis();
+    }
   }
 
 
 }
+
+//void printIP() {
+//  Serial.printf("My IP address: ");
+//  for (byte thisByte = 0; thisByte < 3; thisByte++) {
+//    Serial.printf("%i.",Ethernet.localIP()[thisByte]);
+//  }
+//  Serial.printf("%i\n",Ethernet.localIP()[3]);
+//}
 
 void text(void) {
 
