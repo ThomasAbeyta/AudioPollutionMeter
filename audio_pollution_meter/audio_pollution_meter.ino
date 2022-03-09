@@ -5,6 +5,9 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+//#include <Ethernet.h>
+//#include <mac.h>
+//#include <hue.h>
 
 #define TIME_HEADER  "T"   // Header tag for serial time sync message
 
@@ -33,6 +36,17 @@ void setup() {
   Serial.begin(9600);
   while (!Serial);  // Wait for Arduino Serial Monitor to open
   delay(100);
+
+  //pinMode(10, OUTPUT);
+  //digitalWrite(10, HIGH);
+  //pinMode(4, OUTPUT);
+  //digitalWrite(4, HIGH);
+
+  //Ethernet.begin(mac);           
+  //printIP();
+  //Serial.printf("LinkStatus: %i  \n",Ethernet.linkStatus());
+
+
 
   if (timeStatus() != timeSet) {
     Serial.println("Unable to sync with the RTC");
@@ -65,7 +79,7 @@ void setup() {
 
   //clear the buffer
   display.clearDisplay();
-  display.setRotation(2);
+  display.setRotation(0);
 
 
 
