@@ -19,7 +19,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 File dataFile;
 
 const int chipSelect = 4;
-const int ANALOGPIN = 19;
+const int ANALOGPIN = 20;
 bool status;
 int audio;
 ; int dbLevel;
