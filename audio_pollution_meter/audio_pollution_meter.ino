@@ -1,5 +1,4 @@
 #include <TimeLib.h>        //time header
-
 #include <SD.h>
 #include <SPI.h>
 #include <Wire.h>
@@ -8,6 +7,7 @@
 #include <Ethernet.h>
 #include <mac.h>
 #include <hue.h>
+#include <Encoder.h>
 
 #define TIME_HEADER  "T"   // Header tag for serial time sync message
 
@@ -21,15 +21,27 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 File dataFile;
 
+const int PIN15 = 15;
+const int PIN17 = 17;
 const int chipSelect = 4;
 const int ANALOGPIN = 20;
 bool status;
-int audio;
-; int dbLevel;
+int micVolume;
+int dbLevel;
 int currentTime;
 int lastSecond;
+int position;
+int n ;
+int i;
+int oldP;
+int thresHold;
+
+
+Encoder myEnc(PIN15, PIN17);
 
 void setup() {
+
+  myEnc.write(700);
 
   setSyncProvider(getTeensy3Time);        // set the Time library to use Teensy 3.0's RTC to keep time
 
@@ -42,9 +54,9 @@ void setup() {
   //pinMode(4, OUTPUT);
   //digitalWrite(4, HIGH);
 
-  Ethernet.begin(mac);           
+  Ethernet.begin(mac);
   //printIP();
-  Serial.printf("LinkStatus: %i  \n",Ethernet.linkStatus());
+  Serial.printf("LinkStatus: %i  \n", Ethernet.linkStatus());
 
 
 
@@ -65,7 +77,7 @@ void setup() {
   status = SD.begin(chipSelect);
   if (!status) {  // if status is false
     Serial.printf("Card failed, or not present\n");
-    while (true); // pause the code indefinately
+    //while (true); // pause the code indefinately
   }
   else {
     Serial.printf("card initialized.\n");           //checks the SD status and initialize
@@ -86,10 +98,13 @@ void setup() {
 }
 
 void loop() {
+
+
+  thresHold = myEnc.read();
   currentTime = millis();
 
-  
-  audio = analogRead(ANALOGPIN);                    //interger for audio
+
+  micVolume = analogRead(ANALOGPIN);                    //interger for audio
 
   if (Serial.available()) {
     time_t t = processSyncMessage();
@@ -98,19 +113,22 @@ void loop() {
       setTime(t);
     }
   }
-  if (audio >= 900) {
-    digitalClockDisplay();
-    text();
-    Serial.printf(" above 45db:%i\n", audio);
-    setHue(5,true,HueBlue,200,255); 
+  if (micVolume >= thresHold) {
+    setHue(5, true, HueBlue, 200, 255);
     if ((currentTime - lastSecond) > 250) {
-    setHue(5,true,HueOrange,200,255);
-    writeToSD(audio);                             //pulls up void writeToSD when above a threshold
-    lastSecond = millis();
+      setHue(5, true, HueOrange, 200, 255);
+                                  
+      lastSecond = millis();
     }
   }
+  if (micVolume >= thresHold) {
+    digitalClockDisplay();
+    text();
+    writeToSD(micVolume); 
+    Serial.printf(" above 45db:%i\n", micVolume);
+  }
 
-
+text();
 }
 
 //void printIP() {
@@ -123,28 +141,29 @@ void loop() {
 
 void text(void) {
 
-  
+
   display.clearDisplay();
 
   if ((currentTime - lastSecond) > 1000) {
     display.setTextSize(1);  //draws 2x scale text
     display.setTextColor(SSD1306_WHITE);
     display.setCursor(10, 0);
-    display.printf("DB level: %i", audio);
+    display.printf("DB level: %i\n,Thresold: %i\n", micVolume, thresHold);
     display.display(); //shows the initial text
     lastSecond = millis();
     display.clearDisplay();
+    
   }
 }
 
 
-void writeToSD(int print_audio) {
+void writeToSD(int print_micVolume) {
   dataFile = SD.open("loud.csv", FILE_WRITE);   //writes int audio to SD
 
   if (dataFile) {
-    dataFile.printf("%i\n", print_audio);
+    dataFile.printf("%i\n", print_micVolume);
     dataFile.close();
-    Serial.printf("write to sd: %i \n", print_audio);
+    Serial.printf("write to sd: %i \n", print_micVolume);
   }
   else {
     Serial.printf("loud.csv \n");          // if the file is available, write to it:
@@ -165,7 +184,7 @@ void readFromSD() {
     }
     dataFile.close();
   } else {
-    Serial.printf("error opening audioPol.csvm \n");
+    Serial.printf("error opening micVolumePol.csvm \n");
   }
 
   return;
