@@ -35,6 +35,9 @@ int n ;
 int i;
 int oldP;
 int thresHold;
+char filename[13];
+int incident;
+int hr;
 
 
 Encoder myEnc(PIN15, PIN17);
@@ -100,12 +103,10 @@ void setup() {
 void loop() {
 
 
-  thresHold = myEnc.read();
-  currentTime = millis();
-
 
   micVolume = analogRead(ANALOGPIN);                    //interger for audio
-
+  thresHold = myEnc.read();
+  
   if (Serial.available()) {
     time_t t = processSyncMessage();
     if (t != 0) {
@@ -117,18 +118,24 @@ void loop() {
     setHue(5, true, HueBlue, 200, 255);
     if ((currentTime - lastSecond) > 250) {
       setHue(5, true, HueOrange, 200, 255);
-                                  
+
       lastSecond = millis();
     }
   }
   if (micVolume >= thresHold) {
-    digitalClockDisplay();
-    text();
-    writeToSD(micVolume); 
-    Serial.printf(" above 45db:%i\n", micVolume);
-  }
 
-text();
+    text();
+    incident++;
+    sprintf(filename, "data%04i.csv", 45);
+  
+    while (micVolume>thresHold){
+      writeToSD();
+      Serial.printf(" above 45db:%i\n", micVolume);
+      micVolume = analogRead(ANALOGPIN);
+      }
+    }
+
+  text();
 }
 
 //void printIP() {
@@ -152,18 +159,27 @@ void text(void) {
     display.display(); //shows the initial text
     lastSecond = millis();
     display.clearDisplay();
-    
+
   }
 }
 
 
-void writeToSD(int print_micVolume) {
-  dataFile = SD.open("loud.csv", FILE_WRITE);   //writes int audio to SD
+void writeToSD() {
+
+ 
+
+  dataFile = SD.open(filename, FILE_WRITE);
+
+  hr = hour();
+  currentTime = hr;
+
+  
+  currentTime = millis();
 
   if (dataFile) {
-    dataFile.printf("%i\n", print_micVolume);
+    dataFile.printf("write to sd: %i \n, %i\n", micVolume, hr);
     dataFile.close();
-    Serial.printf("write to sd: %i \n", print_micVolume);
+    Serial.printf("write to sd: %i \n, %i\n", micVolume, hr);
   }
   else {
     Serial.printf("loud.csv \n");          // if the file is available, write to it:
@@ -184,7 +200,7 @@ void readFromSD() {
     }
     dataFile.close();
   } else {
-    Serial.printf("error opening micVolumePol.csvm \n");
+    Serial.printf("error opening micVolume.csvm \n");
   }
 
   return;
