@@ -8,6 +8,8 @@
 #include <mac.h>
 #include <hue.h>
 #include <Encoder.h>
+#include <wemo.h>
+
 
 #define TIME_HEADER  "T"   // Header tag for serial time sync message
 
@@ -120,13 +122,12 @@ void loop() {
     setHue(5, true, HueBlue, 200, 255);
     if ((currentTime - lastSecond) > 250) {
       setHue(5, true, HueOrange, 200, 255);
-
       lastSecond = millis();
     }
   }
   if (micVolume >= thresHold) {
     
-    text();
+    oled();
     incident++;
     sprintf(filename, "data%04i.csv", incident);
 
@@ -135,16 +136,15 @@ void loop() {
     sc = second();
     int startTime;
     
-    sprintf(filename,"TM%02i%02i%02i.csv");
+    sprintf(filename,"TM%02i%02i%02i.csv",hr,mn,sc);
     while (micVolume >= thresHold) {
       writeToSD();
       Serial.printf(" above 45db:%i\n", micVolume);
       micVolume = analogRead(ANALOGPIN);
-      
+      switchON(1);
+      } 
     }
-  }
-
-  text();
+  oled();
 }
 
 //void printIP() {
@@ -155,7 +155,7 @@ void loop() {
 //  Serial.printf("%i\n",Ethernet.localIP()[3]);
 //}
 
-void text(void) {
+void oled(void) {
 
 
   display.clearDisplay();
@@ -164,7 +164,7 @@ void text(void) {
     display.setTextSize(1);  //draws 2x scale text
     display.setTextColor(SSD1306_WHITE);
     display.setCursor(10, 0);
-    display.printf("DB level: %i\n,Thresold: %i\n", micVolume, thresHold);
+    display.printf("DB level: %i\n Thresold: %i\n", micVolume, thresHold);
     display.display(); //shows the initial text
     lastSecond = millis();
     display.clearDisplay();
