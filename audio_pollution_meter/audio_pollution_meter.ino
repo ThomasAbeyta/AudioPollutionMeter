@@ -38,6 +38,8 @@ int thresHold;
 char filename[13];
 int incident;
 int hr;
+int mn;
+int sc;
 
 
 Encoder myEnc(PIN15, PIN17);
@@ -54,8 +56,8 @@ void setup() {
 
   pinMode(10, OUTPUT);
   digitalWrite(10, HIGH);
-  //pinMode(4, OUTPUT);
-  //digitalWrite(4, HIGH);
+  pinMode(4, OUTPUT);
+  digitalWrite(4, HIGH);
 
   Ethernet.begin(mac);
   //printIP();
@@ -106,7 +108,7 @@ void loop() {
 
   micVolume = analogRead(ANALOGPIN);                    //interger for audio
   thresHold = myEnc.read();
-  
+
   if (Serial.available()) {
     time_t t = processSyncMessage();
     if (t != 0) {
@@ -123,17 +125,24 @@ void loop() {
     }
   }
   if (micVolume >= thresHold) {
-
+    
     text();
     incident++;
-    sprintf(filename, "data%04i.csv", 45);
-  
-    while (micVolume>thresHold){
+    sprintf(filename, "data%04i.csv", incident);
+
+    hr = hour();
+    mn = minute();
+    sc = second();
+    int startTime;
+    
+    sprintf(filename,"TM%02i%02i%02i.csv");
+    while (micVolume >= thresHold) {
       writeToSD();
       Serial.printf(" above 45db:%i\n", micVolume);
       micVolume = analogRead(ANALOGPIN);
-      }
+      
     }
+  }
 
   text();
 }
@@ -166,20 +175,16 @@ void text(void) {
 
 void writeToSD() {
 
- 
-
   dataFile = SD.open(filename, FILE_WRITE);
 
-  hr = hour();
   currentTime = hr;
 
-  
   currentTime = millis();
 
   if (dataFile) {
-    dataFile.printf("write to sd: %i \n, %i\n", micVolume, hr);
+    dataFile.printf("%i \n", micVolume);
     dataFile.close();
-    Serial.printf("write to sd: %i \n, %i\n", micVolume, hr);
+    Serial.printf("%i\n", micVolume);
   }
   else {
     Serial.printf("loud.csv \n");          // if the file is available, write to it:
